@@ -1,6 +1,19 @@
 # Face-to-Name
 Given an image of a person or a group photo, returns the name of the person if in the database
 
+# Installations
+Run the following
+```
+pip install -r requirements.txt
+```
+
+# How To Run
+From the root directory, to run the programs in the scripts directory use the `-m` flag and do the following:
+```
+python3 -m scripts.db_init
+python3 -m scripts.add_new_faces
+python3 -m scripts.detect_faces
+```
 
 # *********** NOTES FOR ME ***********
 ### ***Main Flow*** 

@@ -13,7 +13,7 @@ import numpy as np
 from typing import List
 from dotenv import load_dotenv
 
-print(load_dotenv())
+load_dotenv()
 
 class DBManager:
     def __init__(self):
@@ -22,22 +22,14 @@ class DBManager:
                 host = os.getenv("DB_HOST"),
                 user = os.getenv("DB_USER"),
                 port = int(os.getenv("DB_PORT")),
+                database = os.getenv("DB_NAME"),
                 passwd = os.getenv("DB_PASS")
             )
+
             self.cursor = self.db.cursor()
 
         except Exception as e:
-            print(os.getenv("DB_HOST"))
             print(f"ERROR: Failed to connect to database: {e}")
-            sys.exit(1)
-
-
-    def createDatabase(self):
-        try:
-            self.cursor.execute("CREATE DATABASE IF NOT EXISTS face_recognition;")
-            self.cursor.execute("USE face_recognition;")
-        except Exception as e:
-            print(f"ERROR: Failed to create database: {e}")
             sys.exit(1)
 
 
@@ -84,9 +76,9 @@ class DBManager:
 
     def close(self):
         try:
-            self.__clearTables()
-            self.cursor.close()
-            self.db.close()
+            if self.db and self.db.is_connected():
+                self.cursor.close()
+                self.db.close()
         except Exception as e:
             print(f"ERROR: Failed to close database: {e}")
 
