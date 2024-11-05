@@ -9,7 +9,7 @@ If the person is not in the database,
 import cv2
 import numpy as np
 import face_recognition
-from typing import Tuple
+from typing import Tuple, List
 from modules.db_manager import DBManager
 
 # TODO: create a method that recognizes the face and returns the name
@@ -24,13 +24,23 @@ class RecognizeFace:
         self.db = DBManager()
         self.names, self.face_paths, self.embeddings = self.db.fetchFaces()
 
+
+    def processImage(self, image_path: str) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+        """
+        Given a path to an image, return the location and embeddings 
+        of each face in image
+        """
+        image = face_recognition.load_image_file(image_path)
+        face_locations = face_recognition.face_locations(image)
+        face_embeddings = face_recognition.face_encodings(image, face_locations)
+        return (face_locations, face_embeddings)
+
     
-    def recognizeFaces(self, image_path: str):
+    def recognizeFaces(self, image_path: str) -> List[Tuple]:
         """
-        Given a path to an image, return that image with names for each person
-        and the locations of unrecognized faces
+        Given a path to an image, return list of unrecognized faces 
         """
-        face_locations, face_embeddings = self.__processImage(image_path)
+        face_locations, face_embeddings = self.processImage(image_path)
         unrecognized_faces = []
 
         image_cv2 = cv2.imread(image_path)
@@ -51,22 +61,39 @@ class RecognizeFace:
             cv2.rectangle(image_cv2, (left, bottom), (right, top), color, 2)
             cv2.putText(image_cv2, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
 
-        cv2.imshow("Recognizing Faces", image_cv2)
-        cv2.waitKey(0)
-
-        return unrecognized_faces, image_cv2
-
-        
+        self.showImage(image_cv2)
+        return unrecognized_faces
 
 
-
-### private methods
-    def __processImage(self, image_path: str) -> Tuple[np.ndarray, np.ndarray]:
+    def addNewFaces(self, unrecognized_faces: List, image_path: str) -> None:
         """
-        Given a path to an image, return the location and embeddings 
-        of each face in image
+        Given a list of unrecognized faces, path to image, and the name
+        add them to the database. If name is unknown ask the user for the name
         """
-        image = face_recognition.load_image_file(image_path)
-        face_locations = face_recognition.face_locations(image)
-        face_embeddings = face_recognition.face_encodings(image, face_locations)
-        return (face_locations, face_embeddings)
+        image_cv2 = cv2.imread(image_path)
+
+        for (top, right, bottom, left), embedding in unrecognized_faces:
+            cv2.rectangle(image_cv2, (left, bottom), (right, top), (255, 0, 0), 3)
+            self.showImage(image_cv2, 2)
+            name = input("Enter the name of the person: ").strip()
+
+            if name in self.names:
+                self.db.insertKnownFaces(name, image_path, embedding)
+            else:
+                self.db.insertUnknownFaces(name, [image_path], [embedding])
+                self.names.append(name)
+
+            self.face_paths.append(image_path)
+            self.embeddings.append(embedding)
+
+
+    def trainModel(self, name, face_paths, embeddings) -> None:
+        """
+        use the data directory to add new faces to the database
+        """
+
+
+    def showImage(self, image: cv2, mili_sec=0) -> None:
+        cv2.imshow("Recognizing Faces", image)
+        cv2.waitKey(mili_sec * 1000)
+        cv2.destroyAllWindows()

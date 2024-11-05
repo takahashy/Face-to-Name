@@ -30,7 +30,7 @@ class DBManager:
             self.cursor = self.db.cursor()
 
         except Exception as e:
-            print(f"ERROR: Failed to connect to database: {e}")
+            print(f"DB ERROR: Failed to connect to database: {e}")
             sys.exit(1)
 
 
@@ -39,26 +39,34 @@ class DBManager:
         self.__createPhotosTable()        
 
 
-    def insertData(self, name: str, face_paths: List[str], embeddings: List[np.ndarray]):
-        # insert just the name to Persons table
+    def insertUnknownFaces(self, name: str, face_paths: List[str], embeddings: List[np.ndarray]):
+        """
+        First time inserting the user with name and faces
+        """
         try:
             query = "INSERT INTO Persons (name) VALUES (%s);"
-            self.cursor.execute(query, (name,))
+            self.cursor.execute(query, (name.lower(),))
         except Exception as e:
-            print(f"ERROR: Failed to insert data into Persons table: {e}")
+            print(f"DB ERROR: Failed to insert new user into Persons table: {e}")
 
         person_id = self.cursor.lastrowid
+        self.__insertPhotos(person_id, face_paths, embeddings)
 
-        # insert each photo path and embedding to the Photos table
+
+    def insertKnownFaces(self, name: str, face_path: str, embedding: np.ndarray):
+        """
+        Insert new faces for a known user in the database
+        """
         try:
-            query = "INSERT INTO Photos (person_id, face_path, embedding) VALUES (%s, %s, %s);"
-            for face_path, embedding in zip(face_paths, embeddings):
-                self.cursor.execute(query, (person_id, face_path, embedding.tobytes()))
-            self.db.commit()
+            query = "SELECT id FROM Persons WHERE name = %s;"
+            self.cursor.execute(query, (name.lower(),))
+            person_id = self.cursor.fetchone()[0]
         except Exception as e:
-            print(f"ERROR: Failed to insert data into Photos table: {e}")
+            print(f"DB ERROR: Failed to fetch data from Persons table: {e}")
 
+        self.__insertPhotos(person_id, [face_path], [embedding])
 
+        
     def fetchFaces(self):
         try:
             self.cursor.execute("""
@@ -71,7 +79,7 @@ class DBManager:
             """)
             rows = self.cursor.fetchall()
         except Exception as e:
-            print(f"ERROR: Failed to fetch data from Persons table: {e}")
+            print(f"DB ERROR: Failed to fetch data from Persons table: {e}")
 
         names, face_paths, embeddings = [], [], []
         for row in rows:
@@ -88,7 +96,7 @@ class DBManager:
                 self.cursor.close()
                 self.db.close()
         except Exception as e:
-            print(f"ERROR: Failed to close database: {e}")
+            print(f"DB ERROR: Failed to close database: {e}")
 
 
     ### private methods
@@ -101,7 +109,7 @@ class DBManager:
                 );
             """)
         except Exception as e:
-            print(f"ERROR: Failed to create Persons table: {e}")
+            print(f"DB ERROR: Failed to create Persons table: {e}")
             sys.exit(1)
 
 
@@ -119,8 +127,18 @@ class DBManager:
                 );
             """)
         except Exception as e:
-            print(f"ERROR: Failed to create Photos table: {e}")
+            print(f"DB ERROR: Failed to create Photos table: {e}")
             sys.exit(1)
+
+
+    def __insertPhotos(self, person_id: int, face_paths: List[str], embeddings: List[np.ndarray]):
+        try:
+            query = "INSERT INTO Photos (person_id, face_path, embedding) VALUES (%s, %s, %s);"
+            photos = [(person_id, face_path, embedding.tobytes()) for face_path, embedding in zip(face_paths, embeddings)]
+            self.cursor.executemany(query, photos)
+            self.db.commit()
+        except Exception as e:  
+            print(f"DB ERROR: Failed to insert new images into Photos table: {e}")
 
 
     def __clearTables(self):
@@ -129,4 +147,4 @@ class DBManager:
             self.cursor.execute("DELETE FROM Persons")
             self.db.commit()
         except Exception as e:
-            print(f"ERROR: Failed to clear tables: {e}")
+            print(f"DB ERROR: Failed to clear tables: {e}")

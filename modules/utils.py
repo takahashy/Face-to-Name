@@ -1,5 +1,11 @@
-from pathlib import Path
+'''
+utils.py
+
+helper functions
+'''
+
 import sys
+from pathlib import Path
 
 def directory_exists(directory: str) -> bool:
     return Path(directory).is_dir()
