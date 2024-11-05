@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class DBManager:
+
     def __init__(self):
         try:
             self.db = mysql.connector.connect(
@@ -41,8 +42,8 @@ class DBManager:
     def insertData(self, name: str, face_paths: List[str], embeddings: List[np.ndarray]):
         # insert just the name to Persons table
         try:
-            sql = "INSERT INTO Persons (name) VALUES (%s);"
-            self.cursor.execute(sql, (name,))
+            query = "INSERT INTO Persons (name) VALUES (%s);"
+            self.cursor.execute(query, (name,))
         except Exception as e:
             print(f"ERROR: Failed to insert data into Persons table: {e}")
 
@@ -50,15 +51,15 @@ class DBManager:
 
         # insert each photo path and embedding to the Photos table
         try:
-            sql = "INSERT INTO Photos (person_id, face_path, embedding) VALUES (%s, %s, %s);"
+            query = "INSERT INTO Photos (person_id, face_path, embedding) VALUES (%s, %s, %s);"
             for face_path, embedding in zip(face_paths, embeddings):
-                self.cursor.execute(sql, (person_id, face_path, embedding.tobytes()))
+                self.cursor.execute(query, (person_id, face_path, embedding.tobytes()))
             self.db.commit()
         except Exception as e:
             print(f"ERROR: Failed to insert data into Photos table: {e}")
 
 
-    def fetchData(self):
+    def fetchFaces(self):
         try:
             self.cursor.execute("""
                 SELECT 
@@ -68,10 +69,17 @@ class DBManager:
                 FROM Persons p
                 INNER JOIN Photos ph ON p.id=ph.person_id;
             """)
-            print(self.cursor.fetchall())
+            rows = self.cursor.fetchall()
         except Exception as e:
             print(f"ERROR: Failed to fetch data from Persons table: {e}")
-            sys.exit(1)
+
+        names, face_paths, embeddings = [], [], []
+        for row in rows:
+            names.append(row[0])
+            face_paths.append(row[1])
+            embeddings.append(np.frombuffer(row[2]))
+
+        return names, face_paths, embeddings
 
 
     def close(self):
@@ -117,7 +125,8 @@ class DBManager:
 
     def __clearTables(self):
         try:
-            self.cursor.execute("DELETE FROM Persons")
             self.cursor.execute("DELETE FROM Photos")
+            self.cursor.execute("DELETE FROM Persons")
+            self.db.commit()
         except Exception as e:
             print(f"ERROR: Failed to clear tables: {e}")
