@@ -18,14 +18,14 @@ def main(image_path):
     unrecognized_faces = recognize_face.recognizeFaces(image_path)
     if unrecognized_faces:
         recognize_face.addNewFaces(unrecognized_faces, image_path)
-        _, image_cv2 = recognize_face.recognizeFaces(image_path)
+        recognize_face.recognizeFaces(image_path)
 
     db_manager.close()
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python3 -m scripts.detect_faces [file]")
+        print("USAGE: python3 -m scripts.detect_faces [file]")
         sys.exit(1)
     
     image = sys.argv[1]

@@ -67,8 +67,8 @@ class RecognizeFace:
 
     def addNewFaces(self, unrecognized_faces: List, image_path: str) -> None:
         """
-        Given a list of unrecognized faces, path to image, and the name
-        add them to the database. If name is unknown ask the user for the name
+        Given a list of unrecognized faces and path to image
+        add them to the database. Ask the user for the name
         """
         image_cv2 = cv2.imread(image_path)
 
@@ -77,12 +77,8 @@ class RecognizeFace:
             self.showImage(image_cv2, 2)
             name = input("Enter the name of the person: ").strip()
 
-            if name in self.names:
-                self.db.insertKnownFaces(name, image_path, embedding)
-            else:
-                self.db.insertUnknownFaces(name, [image_path], [embedding])
-                self.names.append(name)
-
+            self.db.insertFaces(name, [image_path], [embedding])
+            self.names.append(name) if name not in self.names else None
             self.face_paths.append(image_path)
             self.embeddings.append(embedding)
 

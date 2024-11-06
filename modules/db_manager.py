@@ -39,32 +39,12 @@ class DBManager:
         self.__createPhotosTable()        
 
 
-    def insertUnknownFaces(self, name: str, face_paths: List[str], embeddings: List[np.ndarray]):
+    def insertFaces(self, name: str, face_paths: List[str], embeddings: List[np.ndarray]):
         """
         First time inserting the user with name and faces
         """
-        try:
-            query = "INSERT INTO Persons (name) VALUES (%s);"
-            self.cursor.execute(query, (name.lower(),))
-        except Exception as e:
-            print(f"DB ERROR: Failed to insert new user into Persons table: {e}")
-
-        person_id = self.cursor.lastrowid
+        person_id = self.__selectOrInsertPerson(name)
         self.__insertPhotos(person_id, face_paths, embeddings)
-
-
-    def insertKnownFaces(self, name: str, face_path: str, embedding: np.ndarray):
-        """
-        Insert new faces for a known user in the database
-        """
-        try:
-            query = "SELECT id FROM Persons WHERE name = %s;"
-            self.cursor.execute(query, (name.lower(),))
-            person_id = self.cursor.fetchone()[0]
-        except Exception as e:
-            print(f"DB ERROR: Failed to fetch data from Persons table: {e}")
-
-        self.__insertPhotos(person_id, [face_path], [embedding])
 
         
     def fetchFaces(self):
@@ -129,6 +109,28 @@ class DBManager:
         except Exception as e:
             print(f"DB ERROR: Failed to create Photos table: {e}")
             sys.exit(1)
+
+
+    def __selectOrInsertPerson(self, name: str):
+        try:
+            query = "SELECT id FROM Persons WHERE name = %s;"
+            self.cursor.execute(query, (name.lower(),))
+            person_id = self.cursor.fetchone()
+
+            if person_id:
+                return person_id[0]
+            
+        except Exception as e:
+            print(f"DB ERROR: Failed to get user from Persons table: {e}")
+
+        try:
+            query = "INSERT INTO Persons (name) VALUES (%s);"
+            self.cursor.execute(query, (name.lower(),))
+            self.db.commit()
+            return self.cursor.lastrowid
+        
+        except Exception as e:
+            print(f"DB ERROR: Failed to insert new user into Persons table: {e}")
 
 
     def __insertPhotos(self, person_id: int, face_paths: List[str], embeddings: List[np.ndarray]):
