@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 import face_recognition
 from typing import Tuple, List
+from modules.utils import processImage
 from modules.db_manager import DBManager
 
 # TODO: create a method that recognizes the face and returns the name
@@ -24,23 +25,11 @@ class RecognizeFace:
         self.db = DBManager()
         self.names, self.face_paths, self.embeddings = self.db.fetchFaces()
 
-
-    def processImage(self, image_path: str) -> Tuple[List[np.ndarray], List[np.ndarray]]:
-        """
-        Given a path to an image, return the location and embeddings 
-        of each face in image
-        """
-        image = face_recognition.load_image_file(image_path)
-        face_locations = face_recognition.face_locations(image)
-        face_embeddings = face_recognition.face_encodings(image, face_locations)
-        return (face_locations, face_embeddings)
-
-    
     def recognizeFaces(self, image_path: str) -> List[Tuple]:
         """
         Given a path to an image, return list of unrecognized faces 
         """
-        face_locations, face_embeddings = self.processImage(image_path)
+        face_locations, face_embeddings = processImage(image_path)
         unrecognized_faces = []
 
         image_cv2 = cv2.imread(image_path)
@@ -48,7 +37,7 @@ class RecognizeFace:
         for (top, right, bottom, left), embedding in zip(face_locations, face_embeddings):
             matches = face_recognition.compare_faces(self.embeddings, embedding)
             distances = face_recognition.face_distance(self.embeddings, embedding)
-            best_match_index = np.argmin(distances) if distances else -1
+            best_match_index = np.argmin(distances) if len(distances) != 0 else -1
 
             name = "Unknown"
             if matches and matches[best_match_index]:
@@ -65,14 +54,14 @@ class RecognizeFace:
         return unrecognized_faces
 
 
-    def addNewFaces(self, unrecognized_faces: List, image_path: str) -> None:
+    def addNewFaces(self, unrecognized_faces: List[Tuple], image_path: str) -> None:
         """
         Given a list of unrecognized faces and path to image
         add them to the database. Ask the user for the name
         """
-        image_cv2 = cv2.imread(image_path)
 
         for (top, right, bottom, left), embedding in unrecognized_faces:
+            image_cv2 = cv2.imread(image_path)
             cv2.rectangle(image_cv2, (left, bottom), (right, top), (255, 0, 0), 3)
             self.showImage(image_cv2, 2)
             name = input("Enter the name of the person: ").strip()
@@ -80,13 +69,7 @@ class RecognizeFace:
             self.db.insertFaces(name, [image_path], [embedding])
             self.names.append(name) if name not in self.names else None
             self.face_paths.append(image_path)
-            self.embeddings.append(embedding)
-
-
-    def trainModel(self, name, face_paths, embeddings) -> None:
-        """
-        use the data directory to add new faces to the database
-        """
+            self.embeddings.append(embedding)  
 
 
     def showImage(self, image: cv2, mili_sec=0) -> None:

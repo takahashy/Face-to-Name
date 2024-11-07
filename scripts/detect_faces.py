@@ -6,7 +6,8 @@ of the people in the image, if they are in the database.
 '''
 
 import sys
-from modules.utils import image_exists
+from pathlib import Path
+from modules.utils import imageExists
 from modules.db_manager import DBManager
 from modules.recognize_face import RecognizeFace
 
@@ -29,8 +30,8 @@ if __name__ == "__main__":
         sys.exit(1)
     
     image = sys.argv[1]
-    if not image_exists(image):
+    if not imageExists(image):
         print(f"FILE ERROR: `{image}` is not an image")
         sys.exit(1)
 
-    main(image)
+    main(str(Path(image).resolve()))

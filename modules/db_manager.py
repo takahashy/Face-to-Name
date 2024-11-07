@@ -103,7 +103,8 @@ class DBManager:
                     person_id INT NOT NULL,
                     face_path VARCHAR(255) NOT NULL,
                     embedding BLOB NOT NULL,
-                    FOREIGN KEY (person_id) REFERENCES Persons(id)
+                    FOREIGN KEY (person_id) REFERENCES Persons(id),
+                    CONSTRAINT new_face UNIQUE (person_id, face_path)
                 );
             """)
         except Exception as e:
@@ -135,7 +136,7 @@ class DBManager:
 
     def __insertPhotos(self, person_id: int, face_paths: List[str], embeddings: List[np.ndarray]):
         try:
-            query = "INSERT INTO Photos (person_id, face_path, embedding) VALUES (%s, %s, %s);"
+            query = "INSERT IGNORE INTO Photos (person_id, face_path, embedding) VALUES (%s, %s, %s);"
             photos = [(person_id, face_path, embedding.tobytes()) for face_path, embedding in zip(face_paths, embeddings)]
             self.cursor.executemany(query, photos)
             self.db.commit()
@@ -150,3 +151,11 @@ class DBManager:
             self.db.commit()
         except Exception as e:
             print(f"DB ERROR: Failed to clear tables: {e}")
+
+    def __dropTables(self):
+        try:
+            self.cursor.execute("DROP TABLE Photos")
+            self.cursor.execute("DROP TABLE Persons")
+            self.db.commit()
+        except Exception as e:
+            print(f"DB ERROR: Failed to drop tables: {e}")
