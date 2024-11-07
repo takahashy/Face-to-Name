@@ -39,7 +39,7 @@ def main(arg):
     if arg == "all":
         for subdir in DATA_DIR.iterdir():
             name = subdir.name
-            if subdir.is_dir() and name != "test":
+            if subdir.is_dir():
                 print(f"----Reading {name}----")
                 iterateDir(subdir, name)
 
