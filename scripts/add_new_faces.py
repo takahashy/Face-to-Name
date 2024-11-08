@@ -31,6 +31,7 @@ def iterateDir(dir: Path, name:str) -> None:
     DB_MANAGER.insertFaces(name, image_paths, embeddings)
     print()
 
+
 def main(arg):
     """
     reads from a name directory or all directories in the data directory

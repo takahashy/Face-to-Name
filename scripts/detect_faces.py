@@ -16,10 +16,9 @@ def main(image_path):
     db_manager = DBManager()
     recognize_face = RecognizeFace()
 
-    unrecognized_faces = recognize_face.recognizeFaces(image_path)
-    if unrecognized_faces:
-        recognize_face.addNewFaces(unrecognized_faces, image_path)
-        recognize_face.recognizeFaces(image_path)
+    unknown, known = recognize_face.recognizeFaces(image_path)
+    recognize_face.checkFaces(unknown, known, image_path)
+    recognize_face.recognizeFaces(image_path)
 
     db_manager.close()
 

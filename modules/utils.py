@@ -14,9 +14,11 @@ from typing import List, Tuple
 def isDirectory(directory: str) -> bool:
     return Path(directory).is_dir()
 
+
 def isFile(file_path: str) -> bool:
     return Path(file_path).is_file()
-    
+
+
 def imageExists(image_path: str) -> bool:
     if not isFile(image_path):
         print(f"PATH ERROR: `{image_path}` file does not exist")
@@ -26,12 +28,22 @@ def imageExists(image_path: str) -> bool:
     isImage = ext == ".jpg" or ext == ".png" or ext == ".jpeg"
     return isImage
 
+
 def processImage(image_path: str) -> Tuple[List[np.ndarray], List[np.ndarray]]:
     """
     Given a path to an image, return the location and embeddings 
     of each face in image
     """
-    image = face_recognition.load_image_file(image_path)
-    face_locations = face_recognition.face_locations(image)
-    face_embeddings = face_recognition.face_encodings(image, face_locations)
-    return (face_locations, face_embeddings)
+    try:    
+        image = face_recognition.load_image_file(image_path)
+        face_locations = face_recognition.face_locations(image, 2)
+        face_embeddings = face_recognition.face_encodings(image, face_locations)
+        
+        if len(face_locations) == 0:
+            raise Exception(f"no faces detected in `{image_path.split('/')[-1]}`")
+        
+        return (face_locations, face_embeddings)
+    
+    except Exception as e:
+        print(f"WARNING:: {e}")
+        sys.exit(1)

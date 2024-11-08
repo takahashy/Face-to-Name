@@ -2,13 +2,18 @@
 Given an image of a person or a group photo, returns the name of the person if in the database
 
 # Installations
-Run the following
+Make sure you have cmake installed on your computer
+For brew users 
+```
+brew install cmake
+```
+Then run the following to install dependencies
 ```
 pip install -r requirements.txt
 ```
 
 # How To Run
-From the root directory, to run the programs in the scripts directory use the `-m` flag and do the following:
+From the root directory, to run the programs in the scripts directory use the `-m` flag and run the following:
 ```
 python3 -m scripts.db_init
 python3 -m scripts.add_new_faces
