@@ -36,7 +36,7 @@ def processImage(image_path: str) -> Tuple[List[np.ndarray], List[np.ndarray]]:
     """
     try:    
         image = face_recognition.load_image_file(image_path)
-        face_locations = face_recognition.face_locations(image, 2)
+        face_locations = face_recognition.face_locations(image)
         face_embeddings = face_recognition.face_encodings(image, face_locations)
         
         if len(face_locations) == 0:

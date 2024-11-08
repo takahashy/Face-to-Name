@@ -11,14 +11,13 @@ from modules.utils import imageExists
 from modules.db_manager import DBManager
 from modules.recognize_face import RecognizeFace
 
-
 def main(image_path):
     db_manager = DBManager()
     recognize_face = RecognizeFace()
 
     unknown, known = recognize_face.recognizeFaces(image_path)
-    recognize_face.checkFaces(unknown, known, image_path)
-    recognize_face.recognizeFaces(image_path)
+    if recognize_face.checkFaces(unknown, known, image_path):
+        recognize_face.recognizeFaces(image_path)
 
     db_manager.close()
 

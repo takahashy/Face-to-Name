@@ -32,6 +32,7 @@ class RecognizeFace:
         self.db = DBManager()
         self.names, self.face_paths, self.embeddings = self.db.fetchFaces()
 
+
     def recognizeFaces(self, image_path: str) -> List[Tuple]:
         """
         Given a path to an image, return list of unrecognized faces 
@@ -73,17 +74,17 @@ class RecognizeFace:
         if unknown_faces:
             for (top, right, bottom, left), embedding in unknown_faces:
                 image_cv2 = cv2.imread(image_path)
-                cv2.rectangle(image_cv2, (left, bottom), (right, top), BLUE, 3)
+                cv2.rectangle(image_cv2, (left, bottom), (right, top), BLUE, 2)
                 self.showImage(image_cv2, SECONDS)
 
                 name = input("Enter the name of the person: ").strip()
                 unrecognized_faces.append((name, embedding))
 
-        if input("\nAre the known names correct? (y/n) ").lower()[0] != "y":
+        if known_faces and input("\nAre the known names correct? (y/n) ").lower()[0] != "y":
             for name, (top, right, bottom, left), embedding in known_faces:
                 image_cv2 = cv2.imread(image_path)
-                cv2.rectangle(image_cv2, (left, bottom), (right, top), RED, 3)
-                cv2.putText(image_cv2, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, RED, )
+                cv2.rectangle(image_cv2, (left, bottom), (right, top), RED, 2)
+                cv2.putText(image_cv2, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, RED, 2)
                 self.showImage(image_cv2, SECONDS)
 
                 if input(f"Is {name} correct? (y/n) ").lower() == "n":
@@ -94,6 +95,8 @@ class RecognizeFace:
         self.addNewFaces(unrecognized_faces, image_path)
         print("\033[92mDone!\033[0m")
 
+        return len(unrecognized_faces) != 0
+
 
     def addNewFaces(self, unrecognized_faces: List[Tuple], image_path: str) -> None:
         """
@@ -102,10 +105,9 @@ class RecognizeFace:
         """
         for name, embedding in unrecognized_faces:
             self.db.insertFaces(name, [image_path], [embedding])
-            self.names.append(name) if name not in self.names else None
+            self.names.append(name)
             self.face_paths.append(image_path)
-            self.embeddings.append(embedding)  
-
+            self.embeddings.append(embedding)
 
     def showImage(self, image: cv2, mili_sec=0) -> None:
         cv2.imshow("Recognizing Faces", image)
