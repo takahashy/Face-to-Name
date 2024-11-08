@@ -48,7 +48,7 @@ def main(arg):
         iterateDir(DATA_DIR / arg, arg)
 
     else:
-        print("PATH ERROR: `{image_file}` does not exist") 
+        print(f"PATH ERROR: `{arg}` does not exist") 
         sys.exit(1)
 
     print(f"\33[92mDone!\033[0m")

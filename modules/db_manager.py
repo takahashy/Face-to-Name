@@ -43,11 +43,15 @@ class DBManager:
         """
         First time inserting the user with name and faces
         """
-        person_id = self.__selectOrInsertPerson(name)
+        id = self.__selectPerson(name)
+        person_id = id if id != -1 else self.__InsertPerson(name) 
         self.__insertPhotos(person_id, face_paths, embeddings)
 
         
-    def fetchFaces(self):
+    def fetchAllFaces(self):
+        """
+        get all the names, faces, and embeddings in the database
+        """
         try:
             self.cursor.execute("""
                 SELECT 
@@ -68,7 +72,26 @@ class DBManager:
             embeddings.append(np.frombuffer(row[2]))
 
         return names, face_paths, embeddings
+    
 
+    def getFacesOfName(self, name: str):
+        """
+        if the name is in the database return the paths to the images
+        """
+        id = self.__selectPerson(name)
+        if id == -1:
+            print(f"USER ERROR: `{name}` is not in database")
+            return None
+        
+        try:
+            query = "SELECT face_path, embedding FROM Photos WHERE person_id = %s;"
+            self.cursor.execute(query, (id,))
+            rows = self.cursor.fetchall()
+            return [(row[0], np.frombuffer(row[1])) for row in rows]
+        
+        except Exception as e:
+            print(f"DB ERROR: Failed to fetch data from Photos table: {e}")
+        
 
     def close(self):
         try:
@@ -112,7 +135,7 @@ class DBManager:
             sys.exit(1)
 
 
-    def __selectOrInsertPerson(self, name: str):
+    def __selectPerson(self, name: str):
         try:
             query = "SELECT id FROM Persons WHERE name = %s;"
             self.cursor.execute(query, (name.lower(),))
@@ -120,10 +143,14 @@ class DBManager:
 
             if person_id:
                 return person_id[0]
+            else:
+                return -1
             
         except Exception as e:
             print(f"DB ERROR: Failed to get user from Persons table: {e}")
 
+
+    def __InsertPerson(self, name: str):
         try:
             query = "INSERT INTO Persons (name) VALUES (%s);"
             self.cursor.execute(query, (name.lower(),))

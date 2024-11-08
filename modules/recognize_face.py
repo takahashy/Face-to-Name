@@ -30,7 +30,7 @@ class RecognizeFace:
         users is a dictionary where key is embeddings and value is (name, face_path)
         """
         self.db = DBManager()
-        self.names, self.face_paths, self.embeddings = self.db.fetchFaces()
+        self.names, self.face_paths, self.embeddings = self.db.fetchAllFaces()
 
 
     def recognizeFaces(self, image_path: str) -> List[Tuple]:
@@ -57,7 +57,7 @@ class RecognizeFace:
                 known_faces.append((name, (top, right, bottom, left), embedding))
                 
             color = GREEN if name != "Unknown" else RED
-            cv2.rectangle(image_cv2, (left, bottom), (right, top), color, 2)
+            cv2.rectangle(image_cv2, (left, top), (right, bottom), color, 2)
             cv2.putText(image_cv2, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, color, 2)
 
         self.showImage(image_cv2)
@@ -69,33 +69,38 @@ class RecognizeFace:
         Ask the name for each unknown and incorrect faces. 
         Add those names and faces to the database.
         """
-        unrecognized_faces = []
+        new_faces = []
+        new = True
 
         if unknown_faces:
             for (top, right, bottom, left), embedding in unknown_faces:
                 image_cv2 = cv2.imread(image_path)
-                cv2.rectangle(image_cv2, (left, bottom), (right, top), BLUE, 2)
+                cv2.rectangle(image_cv2, (left, top), (right, bottom), BLUE, 2)
                 self.showImage(image_cv2, SECONDS)
 
                 name = input("Enter the name of the person: ").strip()
-                unrecognized_faces.append((name, embedding))
+                new_faces.append((name, embedding))
 
-        if known_faces and input("\nAre the known names correct? (y/n) ").lower()[0] != "y":
-            for name, (top, right, bottom, left), embedding in known_faces:
-                image_cv2 = cv2.imread(image_path)
-                cv2.rectangle(image_cv2, (left, bottom), (right, top), RED, 2)
-                cv2.putText(image_cv2, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, RED, 2)
-                self.showImage(image_cv2, SECONDS)
+        if known_faces:
+            if input("\nAre the known names correct? (y/n) ").lower()[0] != "y":
+                for name, (top, right, bottom, left), embedding in known_faces:
+                    image_cv2 = cv2.imread(image_path)
+                    cv2.rectangle(image_cv2, (left, top), (right, bottom), RED, 2)
+                    cv2.putText(image_cv2, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, FONT_SCALE, RED, 2)
+                    self.showImage(image_cv2, SECONDS)
 
-                if input(f"Is {name} correct? (y/n) ").lower() == "n":
-                    name = input("Enter the name of the person: ").strip()
-                    unrecognized_faces.append((name, embedding))
-                print()
+                    if input(f"Is {name} correct? (y/n) ").lower() == "n":
+                        name = input("Enter the name of the person: ").strip()
+                    new_faces.append((name, embedding))
+                    print()
+            else:
+                new = False
+                new_faces += [(name, embedding) for name, _, embedding in known_faces]
         
-        self.addNewFaces(unrecognized_faces, image_path)
+        self.addNewFaces(new_faces, image_path)
         print("\033[92mDone!\033[0m")
 
-        return len(unrecognized_faces) != 0
+        return new
 
 
     def addNewFaces(self, unrecognized_faces: List[Tuple], image_path: str) -> None:
