@@ -71,7 +71,7 @@ class RecognizeFace:
         Add those names and faces to the database.
         """
         new_faces = []
-        new = True
+        new = False
 
         if unknown_faces:
             for (top, right, bottom, left), embedding in unknown_faces:
@@ -81,6 +81,7 @@ class RecognizeFace:
 
                 name = input("Enter the name of the person: ").strip()
                 new_faces.append((name, embedding))
+                new = True
 
         if known_faces:
             if input("\nAre the known names correct? (y/n) ").lower()[0] != "y":
@@ -94,8 +95,9 @@ class RecognizeFace:
                         name = input("Enter the name of the person: ").strip()
                     new_faces.append((name, embedding))
                     print()
+                new = True
             else:
-                new = False
+                new |= False
                 new_faces += [(name, embedding) for name, _, embedding in known_faces]
         
         self.addNewFaces(new_faces, image_path)
