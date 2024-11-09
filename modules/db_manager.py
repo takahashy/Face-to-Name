@@ -40,11 +40,8 @@ class DBManager:
 
 
     def insertFaces(self, name: str, face_paths: List[str], embeddings: List[np.ndarray]):
-        """
-        First time inserting the user with name and faces
-        """
         id = self.__selectPerson(name)
-        person_id = id if id != -1 else self.__InsertPerson(name) 
+        person_id = id if id != -1 else self.__insertPerson(name) 
         self.__insertPhotos(person_id, face_paths, embeddings)
 
         
@@ -150,7 +147,7 @@ class DBManager:
             print(f"DB ERROR: Failed to get user from Persons table: {e}")
 
 
-    def __InsertPerson(self, name: str):
+    def __insertPerson(self, name: str):
         try:
             query = "INSERT INTO Persons (name) VALUES (%s);"
             self.cursor.execute(query, (name.lower(),))

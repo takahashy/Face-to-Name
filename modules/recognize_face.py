@@ -42,6 +42,7 @@ class RecognizeFace:
 
         image_cv2 = cv2.imread(image_path)
 
+        # for each face in the image compare the embedding with that in db and find the closest match
         for (top, right, bottom, left), embedding in zip(face_locations, face_embeddings):
             matches = face_recognition.compare_faces(self.embeddings, embedding, TOLERANCE)
             distances = face_recognition.face_distance(self.embeddings, embedding)
@@ -113,6 +114,7 @@ class RecognizeFace:
             self.names.append(name)
             self.face_paths.append(image_path)
             self.embeddings.append(embedding)
+
 
     def showImage(self, image: cv2, mili_sec=0) -> None:
         cv2.imshow("Recognizing Faces", image)

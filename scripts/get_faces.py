@@ -16,6 +16,7 @@ def main():
 
     images = db_manager.getFacesOfName(name)
     
+    # if name is in db show all images of the person with a rectangle around the face
     if images:
         count = 1
         for path, embedding in images:

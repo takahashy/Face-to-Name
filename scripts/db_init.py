@@ -1,4 +1,11 @@
+'''
+db_init.py
+
+create the tables in the database
+'''
+
 from modules.db_manager import DBManager
+
 
 def init_db():
     db = DBManager()
