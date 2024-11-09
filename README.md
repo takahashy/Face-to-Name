@@ -1,8 +1,14 @@
 # Face-to-Name
-Given an image of a person or a group photo, returns the name of the person if in the database
+There are 3 main features of this program.
+
+1. Given an image of a person or a group photo, returns the name(s) of the people, if they are in the database. AI asks the name for unrecognized faces and also asks whether the returned names of known faces are correct.
+2. Train the model by supplying it faces of a certain person in the `data` directory. The images should be in a data's subdirectory with the person's name: `data/name/img1.png`. The images should be a png, jpeg, or jpg file
+3. Return the images of a person that a user asks for, assuming that the person is in the database.
+
 
 # Installations
-Make sure you have cmake installed on your computer
+Make sure you have cmake installed on your computer.
+
 For brew users 
 ```
 brew install cmake
@@ -13,35 +19,22 @@ pip install -r requirements.txt
 ```
 
 # How To Run
-From the root directory, to run the programs in the scripts directory use the `-m` flag and run the following:
+Run all the programs from the root directory using the `-m` flag.
+
+***To create and initialize tables in the database:***
 ```
 python3 -m scripts.db_init
-python3 -m scripts.add_new_faces
-python3 -m scripts.detect_faces
+```
+***To add images from the data directory and train the model:***
+```
+python3 -m scripts.add_new_faces <"all" | name_of_subdir>
+```
+***To recognize and return the names of people in a photo:***
+```
+python3 -m scripts.detect_faces <image_file>
+```
+***To get the images of a person:***
+```
+python3 -m scripts.get_faces
 ```
 
-# *********** NOTES FOR ME ***********
-### ***Main Flow*** 
-1. Give the AI an image of a person or a group photo
-2. Check if each person is in the database
-3. If AI determines person is in the database, return a picture with the name of that person
-4. If AI determines person is NOT in the database, manually check if that person is actually not in the database. If the person is not add picture to database and train AI regardless
-
-    > P1: Real time image capture
-
-### ***MileStone*** 
-1. Create the database and manager
-    - create the tables `users` and `photos`
-    - insert users and photos given the name, embedding of the image, and path to image
-    - select all the name and embedding of an image
-    > P1: update and delete functions
-
-2. Processing image
-    - recognizing the human faces in an image
-    - encode them to an embedding
-    - train the AI with the name and image
-
-3. Recognizing the names
-    - process the image to look for facial features
-    - check if the embedding is in the database
-    - return the names on the image
